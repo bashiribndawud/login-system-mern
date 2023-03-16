@@ -5,9 +5,20 @@ import styles from "../styles/Username.module.css";
 import { validatePassword } from "../helper/validate";
 import { useFormik } from "formik";
 import toast, { Toaster } from "react-hot-toast";
-
-
+import { useStateValue } from "../Context/appContext.js";
+import useFetch from "../hooks/fetchHook.js";
+import { verifyPassword } from "../helper/helpers";
+import { useNavigate } from "react-router-dom";
 const Password = () => {
+  const navigate = useNavigate();
+  const {
+    state: { username },
+  } = useStateValue();
+
+  // const [{ isLoading, apiData, serverError }] = useFetch(
+  //   `v1/user/${username}`
+  // );
+
   const formik = useFormik({
     initialValues: {
       password: "",
@@ -19,9 +30,27 @@ const Password = () => {
     validateOnChange: false,
 
     onSubmit: async (values) => {
-      alert(JSON.stringify(values, null, 2));
+     
+      let loginPromise = verifyPassword({username, password: values.password});
+      toast.promise({
+        loading: "Checking...",
+        success: <b>Login Successful...</b>,
+        error: <b>Password not match</b>,
+      });
+
+      loginPromise.then(res => {
+        let {token} = res.data
+        localStorage.setItem('token', token)
+        navigate("/profile")
+      })
     },
   });
+
+  // if(isLoading){
+  //   return <h1 className="text-2xl font-bold">Loading</h1>
+  // }
+
+  // if(serverError) return <h1 className="text-xl text-red-500">{serverError.message}</h1>
 
   return (
     <div className="container mx-auto">
@@ -29,15 +58,15 @@ const Password = () => {
       <div className="flex h-screen justify-center items-center">
         <div className={styles.glass}>
           <div className="title flex flex-col items-center">
-            <h4 className="text-3xl font-bold">Password</h4>
+            <h4 className="text-3xl font-bold">Hello {username} </h4>
             <span className="py-4 text-xl w-2/3 text-center text-gray-500">
-              Explore More by connecting with us
+              Explore More by connecting with us {username}
             </span>
           </div>
 
           <form className="py-1" onSubmit={formik.handleSubmit}>
             <div className="profile flex justify-center py-4">
-              <img src={Avatar} alt="Avatar" className={styles.profile_img} />
+              <img src={ Avatar} alt="Avatar" className={styles.profile_img} />
             </div>
 
             <div className="textbox flex flex-col justify-center items-center gap-6">

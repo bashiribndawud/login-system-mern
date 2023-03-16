@@ -1,33 +1,37 @@
-import React from 'react'
-import { Link } from 'react-router-dom';
-import Avatar from "../assets/Profile.png"
-import styles from '../styles/Username.module.css'
-import { validateUsername } from '../helper/validate';
+import React, { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Avatar from "../assets/Profile.png";
+import styles from "../styles/Username.module.css";
+import { validateUsername } from "../helper/validate";
 import { useFormik } from "formik";
 import toast, { Toaster } from "react-hot-toast";
+import { useStateValue } from "../Context/appContext";
 
+const Username = () => {
+  const navigate = useNavigate();
+  const {
+    state,  dispatch
+  } = useStateValue();
+  
+  const formik = useFormik({
+    initialValues: {
+      username: "",
+    },
+    validate: validateUsername,
 
+    // validate only when you clcik on submit btn
+    validateOnBlur: false,
+    validateOnChange: false,
 
- const Username = () => {
-
-    const formik = useFormik({
-        initialValues: {
-            username: ""
-        },
-        validate: validateUsername,
-
-        // validate only when you clcik on submit btn
-        validateOnBlur: false,
-        validateOnChange: false,
-
-        onSubmit: async values => {
-            alert(JSON.stringify(values, null, 2));
-        }
-    })
-   
+    onSubmit: async (values) => {
+      dispatch({type: 'SET_USERNAME', username: values.username});
+      navigate("/password")
+    },
+  });
+  
   return (
     <div className="container mx-auto">
-        <Toaster position='top-center' reverseOrder="false"></Toaster>
+      <Toaster position="top-center" reverseOrder="false"></Toaster>
       <div className="flex h-screen justify-center items-center">
         <div className={styles.glass}>
           <div className="title flex flex-col items-center">
@@ -49,10 +53,10 @@ import toast, { Toaster } from "react-hot-toast";
                 id="username"
                 className={styles.textbox}
                 placeholder="Username"
-                {...formik.getFieldProps('username')}
+                {...formik.getFieldProps("username")}
               />
               <button type="submit" className="btn">
-               Sign In
+                Sign In
               </button>
             </div>
 
@@ -69,6 +73,6 @@ import toast, { Toaster } from "react-hot-toast";
       </div>
     </div>
   );
-}
+};
 
-export default Username
+export default Username;

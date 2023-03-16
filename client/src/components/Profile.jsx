@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Avatar from "../assets/Profile.png";
 import styles from "../styles/Username.module.css";
 import { validatePassword } from "../helper/validate";
@@ -7,7 +7,11 @@ import { useFormik } from "formik";
 import toast, { Toaster } from "react-hot-toast";
 import convertToBase64 from "../helper/convert";
 import extend from "../styles/Profile.module.css";
+import { useStateValue } from "../Context/appContext";
+import useFetch from "../hooks/fetchHook.js"
+import {updateUser} from "../helper/helpers"
 const validate = (values) => {
+  
   const errors = {};
   if (values.email) {
     if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
@@ -18,15 +22,19 @@ const validate = (values) => {
   return errors;
 };
 const Profile = () => {
+  const navigate = useNavigate()
+  const [{ isloading, apiData, serverError }] = useFetch();
+  
   const [image, setImage] = useState(null);
   const formik = useFormik({
     initialValues: {
-      firstname: "",
-      lastname: "",
-      address: "",
-      email: "",
-      mobile: "",
+      firstname: apiData?.firstName || '',
+      lastname: apiData?.lastName || '',
+      address: apiData?.address || '',
+      email: apiData?.email || '',
+      mobile: apiData?.mobile || '',
     },
+    enableReinitialize: true,
     validate,
     // validate only when you clcik on submit btn
     validateOnBlur: false,
@@ -34,8 +42,13 @@ const Profile = () => {
 
     onSubmit: async (values) => {
       // formik does not support file upload so we are adding it manually
-      values = await Object.assign(values, { profile: image || "" });
-      console.log(values);
+      values = await Object.assign(values, { profile: image || apiData?.profile || "" });
+      let updateUserPromise = updateUser(values);
+      toast.promise(updateUserPromise, {
+        loading: 'Updating...',
+        success: <b>Update successful...</b>,
+        error: <b>Could not update user</b>
+      })
     },
   });
 
@@ -43,7 +56,12 @@ const Profile = () => {
     const base64 = await convertToBase64(e.target.files[0]);
     setImage(base64);
   };
-
+  // if(isloading) return <h1 className="text-xl">Loading...</h1>
+  // if(serverError) return <h1 className="text-xl text-red-500">{serverError.message}</h1>
+  function userLogOut(){
+    localStorage.removeItem('token');
+    navigate("/")
+  }
   return (
     <div className="container mx-auto">
       <Toaster position="top-center" reverseOrder="false"></Toaster>
@@ -63,7 +81,7 @@ const Profile = () => {
             <label htmlFor="profile">
               <div className="profile flex justify-center py-4">
                 <img
-                  src={image || Avatar}
+                  src={apiData?.profile || image || Avatar}
                   alt="Avatar"
                   className={`${styles.profile_img} ${extend.profile_img}`}
                 />
@@ -134,7 +152,11 @@ const Profile = () => {
               <div className="text-center my-4">
                 <span className="text-xl text-gray-500">
                   come back later?{" "}
-                  <button type="button" className="text-red-500">
+                  <button
+                    type="button"
+                    className="text-red-500"
+                    onClick={userLogOut}
+                  >
                     logout!
                   </button>
                 </span>

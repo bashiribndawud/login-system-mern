@@ -1,11 +1,13 @@
 import React, {useState} from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Avatar from "../assets/Profile.png";
 import styles from "../styles/Username.module.css";
 import { validatePassword } from "../helper/validate";
 import { useFormik } from "formik";
 import toast, { Toaster } from "react-hot-toast";
 import convertToBase64 from "../helper/convert";
+import axios from "axios"
+import { registerUser } from "../helper/helpers";
 
 const validate = values => {
   const errors = {}
@@ -17,9 +19,12 @@ const validate = values => {
     errors.password = toast.error("Password Required")
   }else if(!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
     errors.email = "Invalid email address";
+  }else if(values.password.length < 8) {
+    errors.password = toast.error("min length 8");
   }
 }
 const Register = () => {
+  const navigate = useNavigate()
   const [image, setImage] = useState(null)
   const formik = useFormik({
     initialValues: {
@@ -33,9 +38,17 @@ const Register = () => {
     validateOnChange: false,
 
     onSubmit: async (values) => {
+      
       // formik does not support file upload so we are adding it manually
       values = await Object.assign(values, {profile: image || ""});
-      console.log(values);
+      let registerPromise = registerUser(values);
+      toast.promise(registerPromise, {
+        loading: "Creating...",
+        success: <b>Register Successfully</b>,
+        error: <b>Could not register</b>,
+      });
+
+      registerPromise.then(function(){ navigate("/")})
     },
   });
 
@@ -57,8 +70,8 @@ const Register = () => {
           </div>
 
           <form className="py-1" onSubmit={formik.handleSubmit}>
-            <label htmlFor="profile">
-              <div className="profile flex justify-center py-4">
+            <label htmlFor="profile" style={{ width: "33%" }}>
+              <div className="profile flex justify-center py-4 w-2/6 mx-auto">
                 <img src={image || Avatar} alt="Avatar" className={styles.profile_img} />
               </div>
 

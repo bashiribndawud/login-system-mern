@@ -1,9 +1,15 @@
+import { authenticate } from "./helpers";
 import toast, { Toaster } from "react-hot-toast";
+
 
 
 export async function validateUsername(values){
     const error = userNameVerify({}, values)
+    const {status} = await authenticate(values.username);
 
+    if(status !== 200){
+      error.exist = toast.error("User does not exist")
+    }
     return error
 }
 
@@ -46,9 +52,7 @@ function verifyPassword(errors={}, values){
     errors.password = toast.error("Invalid Password");
   } else if (values.password.length < 4) {
     errors.password = toast.error("Password must be greater than 4 chars");
-  } else if (!specialChar.test(values.password)) {
-    errors.password = toast.error("Passsword must contain special character");
-  }
+  } 
 
   return errors
 }
